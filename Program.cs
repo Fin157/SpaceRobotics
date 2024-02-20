@@ -2,7 +2,7 @@
 using static SpaceRobotics.InputHandler;
 using static SpaceRobotics.OutputHandler;
 
-Execute(@"D:\Coding\Competitive\RandomSchoolComp\2024\SpaceRobotics\input.txt", @"D:\Coding\Competitive\RandomSchoolComp\2024\SpaceRobotics\output.txt");
+Execute(@"C:\Users\444St\source\repos\SpaceRobotics\input.txt", @"C:\Users\444St\source\repos\SpaceRobotics\output.txt");
 
 // The driver function of the whole program
 void Execute(string staticInputPath = null, string staticOutputPath = null)
@@ -11,57 +11,58 @@ void Execute(string staticInputPath = null, string staticOutputPath = null)
     string usedInputPath = staticInputPath ?? TakePath("Input file path (leave blank for console input): ");
     string usedOutputPath = staticOutputPath ?? TakePath("Output file path (leave blank for console output): ");
 
-    TakeInput(out Point startPoint, out Point endPoint, out RingArray<Point> polygon, out int closestToStart, out int closestToEnd, usedInputPath);
+    // Data in
+    TakeInput(out Point startPoint, out Point endPoint, out Point[] polygon, out int closestToStart, out int closestToEnd, usedInputPath);
 
-    Stack<Point> path = Calculate(startPoint, endPoint, polygon, closestToStart, closestToEnd);
+    // Data processing
+    LinkedList<Point> path = Calculate(startPoint, endPoint, polygon, closestToStart, closestToEnd);
 
+    // Data out
     WriteOutput(path, usedOutputPath);
 }
 
-Stack<Point> Calculate(Point startPoint, Point endPoint, RingArray<Point> polygon, int startConnectionIndex, int endConnectionIndex)
+// The main calculation function of the program
+LinkedList<Point> Calculate(Point startPoint, Point endPoint, Point[] polygon, int startConnectionIndex, int endConnectionIndex)
 {
-    foreach (Point p in polygon)
-        Console.WriteLine(p);
+    // Split the polygon into two separate routes for the vehicle to drive along
+    var (leftRoute, rightRoute) = GetRoutes(polygon, startPoint, endPoint, startConnectionIndex, endConnectionIndex);
+
+    // Simplify both routes
+    leftRoute.SimplifyRoute(true);
     Console.WriteLine();
+    rightRoute.SimplifyRoute();
 
-    // Calculate the left path starting with the start point and the connection point on the stack
-    Stack<Point> path = [];
-    Point previous = startPoint;
-    path.Push(startPoint);
-    int pathDirection = 1;
+    // Return whichever of the two routes is shorter
+    return leftRoute.RouteLength() < rightRoute.RouteLength() ? leftRoute : rightRoute;
+}
 
-    for (int i = startConnectionIndex; i != endConnectionIndex; i += pathDirection)
-    {
-        Point current = polygon[i];
-        Point next = i % (polygon.Length - 1) == endConnectionIndex ? endPoint : polygon[i + pathDirection];
+// Splits a single polygon (an array of points) into two independent linked lists,
+// each of which is a route for the vehicle to take
+(LinkedList<Point> leftRoute, LinkedList<Point> rightRoute) GetRoutes(Point[] polygon, Point start, Point end, int startConnectionIndex, int endConnectionIndex)
+{
+    LinkedList<Point> first = [];
+    LinkedList<Point> second = [];
 
-        int direction = Point.DirectionQuotient(previous, current, next);
+    // Calculate wrapped versions of connection indices
+    int endConnectionIndexWrapped = startConnectionIndex > endConnectionIndex ?
+        endConnectionIndex + polygon.Length : endConnectionIndex;
+    int startConnectionIndexWrapped = startConnectionIndex < endConnectionIndex ?
+        startConnectionIndex + polygon.Length : startConnectionIndex;
 
-        if (direction != pathDirection)
-        {
-            path.Push(current);
-            previous = current;
-        }
-        else
-            path.Push(next);
-    }
+    // Fill the first route
+    for (int i = endConnectionIndex; i <= startConnectionIndexWrapped; i++)
+        first.AddFirst(polygon[i % polygon.Length]);
 
-    foreach (Point point in path)
-        Console.WriteLine(point);
+    // Fill the second route
+    for (int i = startConnectionIndex; i <= endConnectionIndexWrapped; i++)
+        second.AddLast(polygon[i % polygon.Length]);
 
-    // Start traversing the array to the left (in order)
+    // Add the start and end point to each of the routes
+    // (the vehicle's initial position and its destination, respectively)
+    second.AddFirst(start);
+    first.AddFirst(start);
+    second.AddLast(end);
+    first.AddLast(end);
 
-
-    // Calculate the right path as well with the same principle
-    // Calculate the lengths of the paths and take the shorter one
-
-    // For each route:
-    // Start at start point
-    // Add the next point in line to the route
-    // Proceed to the next point
-    // Calculate the angle AT the middle point (the one between the newest one and the starter)
-    // If the angle > 180, revert the newest point and add just the one after it instead to the stack
-    // Repeat until end point
-
-    return [];
+    return (first, second);
 }

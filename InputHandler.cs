@@ -2,9 +2,9 @@
 
 public static class InputHandler
 {
-    public static void TakeInput(out Point startPoint, out Point endPoint, out LinkedList<Point> leftRoute, out LinkedList<Point> rightRoute, string inputPath = null)
+    public static void TakeInput(out Point startPoint, out Point endPoint, out Point[] polygon, out int closestToStart, out int closestToEnd, string inputPath = null)
     {
-        StreamReader reader = Path.Exists(inputPath) ? new(inputPath) : (StreamReader)Console.In;
+        using TextReader reader = Path.Exists(inputPath) ? new StreamReader(inputPath) : Console.In;
 
         // Get the start and end points
         startPoint = Point.SmartParse(reader.ReadLine());
@@ -14,15 +14,15 @@ public static class InputHandler
         int polygonVertexCount = SmartParseInt(reader.ReadLine()); // Scrap the vertex count line because we don't need it
         double currentClosestToStartDist = double.MaxValue;
         double currentClosestToEndDist = double.MaxValue;
-        int closestToStart = -1;
-        int closestToEnd = -1;
-        LinkedList<Point> points = [];
+        closestToStart = -1;
+        closestToEnd = -1;
+        polygon = new Point[polygonVertexCount];
 
         // Fill the polygon array with its vertices and mark the closest one to the start point
-        for (int i = 0; !reader.EndOfStream; i++)
+        for (int i = 0; reader.Peek() != -1; i++)
         {
             Point p = Point.SmartParse(reader.ReadLine());
-            points.AddLast(p);
+            polygon[i] = p;
 
             // Set this point as the current closest if it is closer than the previous closest
             double distanceToStart = p.EuclideanDistance(startPoint);
@@ -38,21 +38,6 @@ public static class InputHandler
                 currentClosestToEndDist = distanceToEnd;
             }
         }
-
-        leftRoute = [];
-        rightRoute = [];
-
-        Point point = points.ElementAt(closestToStart);
-        Point end = points.ElementAt(closestToEnd);
-        while (point != end)
-        {
-            leftRoute.AddLast(point);
-        }
-        leftRoute.AddFirst(startPoint);
-        leftRoute.AddLast()
-        leftRoute.AddLast(endPoint);
-
-        rightRoute.AddLast(startPoint);
     }
 
     public static string TakePath(string prompt)
