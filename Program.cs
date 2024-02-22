@@ -2,7 +2,7 @@
 using static SpaceRobotics.InputHandler;
 using static SpaceRobotics.OutputHandler;
 
-Execute(@"C:\Users\444St\source\repos\SpaceRobotics\input.txt", @"C:\Users\444St\source\repos\SpaceRobotics\output.txt");
+Execute();
 
 // The driver function of the whole program
 void Execute(string staticInputPath = null, string staticOutputPath = null)
